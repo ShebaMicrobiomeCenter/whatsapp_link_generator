@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WhatsApp Link Generator</title>
+<style>
+  body {
+    font-family: sans-serif;
+    direction: rtl;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+  }
+  #container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+  }
+  #drop-area-container {
+    flex-grow: 0;
+    margin-bottom: 10px;
+  }
+  #drop-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    width: 80%;
+    margin: 0 auto;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    transition: background-color 0.3s;
+  }
+  #drop-area.highlight {
+    border-color: #0066cc;
+    background-color: #f0f6ff;
+  }
+  #file-input {
+    display: none;
+  }
+  #browse-button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+  }
+  #browse-button:hover {
+    background-color: #0055aa;
+  }
+  #output {
+    flex-grow: 1;
+    margin-top: 10px;
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    padding: 10px;
+  }
+  .whatsapp-message {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    position: relative;
+  }
+  .whatsapp-message a {
+    color: #25D366;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .whatsapp-message a:hover {
+    text-decoration: underline;
+  }
+  .copy-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .copy-button:hover {
+    background-color: #45a049;
+  }
+  .copy-button.copied {
+    background-color: #45a049;
+  }
+  #paste-area {
+    width: 80%;
+    height: 150px;
+    margin: 10px auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-family: monospace; /* Use a fixed-width font for better table alignment */
+    white-space: pre-wrap;     /* Allow text to wrap within the paste area */
+    overflow: auto;            /* Add scrollbars if content overflows */
+    resize: vertical;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1) inset;
+  }
+  #paste-button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background-color: #007bff; /* Changed color for distinction */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+  }
+</style>
+</head>
+<body>
+ <div id="container">
+   <h1>WhatsApp Link Generator</h1>
+   
+   <div id="drop-area-container">
+     <div id="drop-area">
+       גררי וזרקי קובץ CSV כאן
+     </div>
+     
+     <button id="browse-button" onclick="document.getElementById('file-input').click()">בחר קובץ</button>
+     <input type="file" id="file-input" accept=".csv">
+   </div>
+
+   <h2>או הדביקי טבלה:</h2>
+   <textarea id="paste-area" placeholder="הדביקי טבלה מקובץ Excel כאן..."></textarea>
+   <button id="paste-button">צור קישורים</button>
+
+  <div id="output"></div>
+
+  <div id="output"></div>
+ </div>
+
+ <script>
+  const dropArea = document.getElementById('drop-area');
+  const fileInput = document.getElementById('file-input');
+  const outputContainer = document.getElementById('output');
+  const browseButton = document.getElementById('browse-button');
+  const pasteArea = document.getElementById('paste-area');
+  const pasteButton = document.getElementById('paste-button');
+
+   pasteButton.addEventListener('click', () => {
+     const pastedData = pasteArea.value;
+     if (pastedData.trim() !== '') {
+       generateWhatsappLinks(pastedData);
+     } else {
+       alert('אנא הדביקי טבלה.');
+     }
+   });
+
+  // [Previous event listeners remain the same]
+
+  function sanitizeColumnName(header) {
+    // Remove whitespace, convert to lowercase, remove non-alphanumeric characters
+    return header.trim().toLowerCase().replace(/[^a-zא-ת0-9]/g, '');
+  }
+
+  function handleFileList(files) {
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const csvData = e.target.result;
+          generateWhatsappLinks(csvData);
+        };
+        reader.readAsText(file, 'UTF-8');
+      } else {
+        alert('אנא בחר קובץ CSV בלבד');
+      }
+    }
+  }
+
+  function sanitizeHebrewText(text) {
+    if (!text) return '';
+    return text.trim().replace(/[^\u0590-\u05FF\u0020-\u007E]/g, '').trim();
+  }
+
+  function generateWhatsappLinks(csvData) {
+    // Clear previous output
+    if (csvData.includes('\t')) { 
+      csvData = csvData.replace(/\t/g, ',');
+    }
+    outputContainer.innerHTML = '';
+
+    // Remove any potential Byte Order Mark and split into rows
+    const normalizedCSVData = csvData.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+    const rows = normalizedCSVData.split('\n');
+
+    // Parse headers (first row)
+    const headers = rows[0].split(',').map(header => sanitizeColumnName(header));
+
+    // Define column name patterns
+    const columnPatterns = {
+       pnid: ['pnid', 'participantid', 'מספרמשתתף', 'participant', 'number'],
+       firstName: ['firstname', 'first', 'פרטי'],
+       lastName: ['lastname', 'last', 'משפחה'],
+       phone: ['phone', 'phonenumber', 'מספרטלפון', 'טלפון']
+     };
+
+    // Find column indices with more flexible matching
+    const findColumnIndex = (patterns) => {
+      return headers.findIndex(header => 
+        patterns.some(pattern => header.includes(pattern))
+      );
+    };
+
+    const pnidIndex = findColumnIndex(columnPatterns.pnid);
+    const firstNameIndex = findColumnIndex(columnPatterns.firstName);
+    const lastNameIndex = findColumnIndex(columnPatterns.lastName);
+    const phoneIndex = findColumnIndex(columnPatterns.phone);
+
+    // Validate column indices
+    if (pnidIndex === -1 || firstNameIndex === -1 || 
+        lastNameIndex === -1 || phoneIndex === -1) {
+      alert('לא נמצאו כל העמודות הנדרשות. אנא ודא שהקובץ מכיל את העמודות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון');
+      return;
+    }
+
+    // Process each row
+    for (let i = 1; i < rows.length; i++) {
+      const rowString = rows[i].trim();
+      if (!rowString) continue;
+
+      // Robust CSV parsing
+      const row = [];
+      let currentField = '';
+      let inQuotes = false;
+      for (let char of rowString) {
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          row.push(currentField.trim());
+          currentField = '';
+        } else {
+          currentField += char;
+        }
+      }
+      row.push(currentField.trim());
+
+      // Validate row has required fields
+      if (row.length <= Math.max(pnidIndex, firstNameIndex, lastNameIndex, phoneIndex)) continue;
+
+      const pnid = row[pnidIndex] || '';
+      const firstName = sanitizeHebrewText(row[firstNameIndex] || '');
+      const lastName = sanitizeHebrewText(row[lastNameIndex] || '');
+      let phone = row[phoneIndex] || '';
+
+      // Process phone number
+      if (phone && phone.trim() !== "") {
+        phone = phone.trim();
+        if (phone.startsWith('0')) {
+          phone = phone.substring(1);
+        }
+        phone = `972${phone}`;
+
+        // Create message div
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'whatsapp-message';
+        
+        // WhatsApp Link
+        const whatsappLink = document.createElement('a');
+        whatsappLink.href = `https://wa.me/${phone}`;
+        whatsappLink.target = '_blank';
+        whatsappLink.textContent = `https://wa.me/${phone}`;
+        
+        // Full message content for copying
+        const messageLines = [
+          `${firstName} ${lastName} יקר/ה,`,
+          'תודה שנרשמת למחקר מיקרוביום!',
+          'כחלק מהמחקר אנו מבקשים למלא שאלונים שמטרתם לבדוק את הקשר בין אוכלוסיית החיידקים האישית שלך למצבים הקשורים לבריאות וחולי.',
+          'מצורפים קישורים לשני שאלונים:',
+          '1. שאלון כללי (קל ונגיש למילוי דרך הטלפון)',
+          '2. שאלון תזונתי (מומלץ למילוי דרך מחשב)',
+          '• את השאלונים ניתן למלא באופן דיגיטלי או באופן ידני עם הגעתך לסקר.',
+          '• תוצאות המחקר יישלחו אליך באמצעות השיבא קונקט, תקבל על כך הודעה במייל ואסאמאס.',
+          '',
+          'במידה והקישורים לא נפתחים יש לשמור מספר זה באנשי הקשר',
+          'תודה,',
+          'צוות המחקר',
+          '------',
+          `שים לב - מספר המשתתף שלך במחקר הוא *${pnid}* `,
+          'על שינוי/דחיית תאריך נבקש ליידע אותנו כאן בצ\'אט, תודה על שיתוף הפעולה'
+        ];
+
+        // Create full message text for copying
+        const fullMessageText = messageLines.join('\n');
+
+        // Add copy button
+        const copyButton = createCopyButton(fullMessageText);
+        messageDiv.appendChild(copyButton);
+        
+        messageDiv.appendChild(whatsappLink);
+        messageDiv.appendChild(document.createElement('br'));
+        
+        // Render message lines
+        messageLines.forEach(line => {
+          const lineElement = document.createElement('div');
+          lineElement.textContent = line;
+          messageDiv.appendChild(lineElement);
+        });
+
+        // Add a line break between messages
+        messageDiv.appendChild(document.createElement('hr'));
+
+        outputContainer.appendChild(messageDiv);
+      }
+    }
+  }
+
+  function createCopyButton(textToCopy) {
+    const copyButton = document.createElement('button');
+    copyButton.textContent = 'העתק';
+    copyButton.className = 'copy-button';
+    
+    copyButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyButton.textContent = 'הועתק!';
+        copyButton.classList.add('copied');
+        setTimeout(() => {
+          copyButton.textContent = 'העתק';
+          copyButton.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert('העתקה נכשלה');
+      });
+    });
+    
+    return copyButton;
+  }
+
+  // [Previous event listeners remain the same]
+</script>
+</body>
+</html>
