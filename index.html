@@ -129,7 +129,7 @@
  
    <h2> הדביקי טבלה:</h2>
    <textarea id="paste-area" placeholder="הדביקי טבלה מקובץ Excel כאן..."></textarea>
-   <button id="paste-button">צור קישורים</button>
+   <button id="paste-button">צרי קישורים</button>
 
   <div id="output"></div>
 
@@ -171,7 +171,7 @@
         };
         reader.readAsText(file, 'UTF-8');
       } else {
-        alert('אנא בחר קובץ CSV בלבד');
+        alert('אנא בחרי קובץ CSV בלבד');
       }
     }
   }
@@ -218,7 +218,7 @@
     // Validate column indices
     if (pnidIndex === -1 || firstNameIndex === -1 || 
         lastNameIndex === -1 || phoneIndex === -1) {
-      alert('לא נמצ כל העמודות הנדרשות. אנא ודא שהקובץ מכיל את העמודות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון');
+      alert('לא נמצאו כל העמודות הנדרשות. אנא ודיא שהקובץ מכיל את העמודות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון');
       return;
     }
 
@@ -315,7 +315,7 @@
 
   function createCopyButton(textToCopy) {
     const copyButton = document.createElement('button');
-    copyButton.textContent = 'העתק';
+    copyButton.textContent = 'העתיקי';
     copyButton.className = 'copy-button';
     
     copyButton.addEventListener('click', () => {
@@ -323,7 +323,7 @@
         copyButton.textContent = 'הועתק!';
         copyButton.classList.add('copied');
         setTimeout(() => {
-          copyButton.textContent = 'העתק';
+          copyButton.textContent = 'העתיקי';
           copyButton.classList.remove('copied');
         }, 2000);
       }).catch(err => {
