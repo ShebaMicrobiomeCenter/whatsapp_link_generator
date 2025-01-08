@@ -15,10 +15,12 @@
 
   <div id="output"></div>
 
-  <button id="export-vcf-button">ייצא קובץ אנשי קשר (VCF)</button>
-  <a id="google-contacts-link" href="https://contacts.google.com/" target="_blank">פתח את Google Contacts</a>
-  <p style="text-align: center;">לאחר הורדת קובץ ה-VCF, עבור אל <a href="https://contacts.google.com/" target="_blank">Google Contacts</a> ולחץ על "יבא" כדי להעלות את הקובץ.</p>
-
+  <button id="export-vcf-button">ייצאי קובץ אנשי קשר (VCF)</button>
+  <p id="vcf-instructions" style="text-align: center; display:none;">
+    לאחר הורדת קובץ ה-VCF, פתחי את <a href="https://contacts.google.com/" target="_blank">Google Contacts</a>.<br>
+    חפשי אפשרות בשם <strong>"יבאי"</strong> או <strong>"Import"</strong>. <br>
+    לרוב, אפשרות זו נמצאת בתפריט הצדדי, או תחת הגדרות (סמל גלגל השיניים).
+  </p>
  </div>
 
  <script>
@@ -262,9 +264,6 @@
 
   exportVCFButton.addEventListener('click', exportVCF);
 
-  // The Google Contacts link is a direct link, no need for JS manipulation here.
-
-  // [Previous event listeners remain the same]
 </script>
 </body>
 </html>
