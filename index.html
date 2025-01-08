@@ -3,137 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <title>WhatsApp Link Generator</title>
-<style>
-  body {
-    font-family: sans-serif;
-    direction: rtl;
-    margin: 0;
-    padding: 20px;
-    background-color: #f4f4f4;
-  }
-  #container {
-    max-width: 800px;
-    margin: 0 auto;
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-  }
-  #drop-area-container {
-    flex-grow: 0;
-    margin-bottom: 10px;
-  }
-  #drop-area {
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    width: 80%;
-    margin: 0 auto;
-    font-weight: bold;
-    text-align: center;
-    padding: 20px;
-    transition: background-color 0.3s;
-  }
-  #drop-area.highlight {
-    border-color: #0066cc;
-    background-color: #f0f6ff;
-  }
-  #file-input {
-    display: none;
-  }
-  #browse-button {
-    display: block;
-    margin: 10px auto;
-    padding: 10px 20px;
-    background-color: #0066cc;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
-  }
-  #browse-button:hover {
-    background-color: #0055aa;
-  }
-  #output {
-    flex-grow: 1;
-    margin-top: 10px;
-    max-height: 500px;
-    overflow-y: auto;
-    border: 1px solid #e0e0e0;
-    padding: 10px;
-  }
-  .whatsapp-message {
-    margin-bottom: 15px;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    position: relative;
-  }
-  .whatsapp-message a {
-    color: #25D366;
-    text-decoration: none;
-    font-weight: bold;
-  }
-  .whatsapp-message a:hover {
-    text-decoration: underline;
-  }
-  .copy-button {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-  .copy-button:hover {
-    background-color: #45a049;
-  }
-  .copy-button.copied {
-    background-color: #45a049;
-  }
-  #paste-area {
-    width: 80%;
-    height: 150px;
-    margin: 10px auto;
-    border: 1px solid #ccc;
-    padding: 10px;
-    font-family: monospace; /* Use a fixed-width font for better table alignment */
-    white-space: pre-wrap;     /* Allow text to wrap within the paste area */
-    overflow: auto;            /* Add scrollbars if content overflows */
-    resize: vertical;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1) inset;
-  }
-  #paste-button {
-      display: block;
-      margin: 10px auto;
-      padding: 10px 20px;
-      background-color: #007bff; /* Changed color for distinction */
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      text-align: center;
-  }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
  <div id="container">
    <h1>WhatsApp Link Generator</h1>
- 
+
    <h2> הדביקי טבלה:</h2>
    <textarea id="paste-area" placeholder="הדביקי טבלה מקובץ Excel כאן..."></textarea>
    <button id="paste-button">צרי קישורים</button>
 
   <div id="output"></div>
 
-  <div id="output"></div>
+  <button id="export-vcf-button">ייצא קובץ אנשי קשר (VCF)</button>
+  <a id="google-contacts-link" href="https://contacts.google.com/" target="_blank">פתח את Google Contacts</a>
+  <p style="text-align: center;">לאחר הורדת קובץ ה-VCF, עבור אל <a href="https://contacts.google.com/" target="_blank">Google Contacts</a> ולחץ על "יבא" כדי להעלות את הקובץ.</p>
+
  </div>
 
  <script>
@@ -143,6 +28,8 @@
   const browseButton = document.getElementById('browse-button');
   const pasteArea = document.getElementById('paste-area');
   const pasteButton = document.getElementById('paste-button');
+  const exportVCFButton = document.getElementById('export-vcf-button');
+  const googleContactsLink = document.getElementById('google-contacts-link');
 
    pasteButton.addEventListener('click', () => {
      const pastedData = pasteArea.value;
@@ -181,12 +68,15 @@
     return text.trim().replace(/[^\u0590-\u05FF\u0020-\u007E]/g, '').trim();
   }
 
+  let contactsData = []; // To store data for VCF export
+
   function generateWhatsappLinks(csvData) {
     // Clear previous output
-    if (csvData.includes('\t')) { 
+    if (csvData.includes('\t')) {
       csvData = csvData.replace(/\t/g, ',');
     }
     outputContainer.innerHTML = '';
+    contactsData = []; // Clear previous data
 
     // Remove any potential Byte Order Mark and split into rows
     const normalizedCSVData = csvData.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
@@ -205,7 +95,7 @@
 
     // Find column indices with more flexible matching
     const findColumnIndex = (patterns) => {
-      return headers.findIndex(header => 
+      return headers.findIndex(header =>
         patterns.some(pattern => header.includes(pattern))
       );
     };
@@ -216,7 +106,7 @@
     const phoneIndex = findColumnIndex(columnPatterns.phone);
 
     // Validate column indices
-    if (pnidIndex === -1 || firstNameIndex === -1 || 
+    if (pnidIndex === -1 || firstNameIndex === -1 ||
         lastNameIndex === -1 || phoneIndex === -1) {
       alert('לא נמצאו כל העמודות הנדרשות. אנא ודיא שהקובץ מכיל את העמודות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון');
       return;
@@ -259,16 +149,24 @@
         }
         phone = `972${phone}`;
 
+        // Store data for VCF
+        contactsData.push({
+          firstName: firstName,
+          lastName: lastName,
+          phone: phone,
+          pnid: pnid
+        });
+
         // Create message div
         const messageDiv = document.createElement('div');
         messageDiv.className = 'whatsapp-message';
-        
+
         // WhatsApp Link
         const whatsappLink = document.createElement('a');
         whatsappLink.href = `https://wa.me/${phone}`;
         whatsappLink.target = '_blank';
         whatsappLink.textContent = `https://wa.me/${phone}`;
-        
+
         // Full message content for copying
         const messageLines = [
           `${firstName} ${lastName} יקר/ה,`,
@@ -294,10 +192,10 @@
         // Add copy button
         const copyButton = createCopyButton(fullMessageText);
         messageDiv.appendChild(copyButton);
-        
+
         messageDiv.appendChild(whatsappLink);
         messageDiv.appendChild(document.createElement('br'));
-        
+
         // Render message lines
         messageLines.forEach(line => {
           const lineElement = document.createElement('div');
@@ -317,7 +215,7 @@
     const copyButton = document.createElement('button');
     copyButton.textContent = 'העתיקי';
     copyButton.className = 'copy-button';
-    
+
     copyButton.addEventListener('click', () => {
       navigator.clipboard.writeText(textToCopy).then(() => {
         copyButton.textContent = 'הועתק!';
@@ -331,9 +229,40 @@
         alert('העתקה נכשלה');
       });
     });
-    
+
     return copyButton;
   }
+
+  function exportVCF() {
+    if (contactsData.length === 0) {
+      alert('לא נוצרו אנשי קשר לייצוא.');
+      return;
+    }
+
+    let vcfContent = '';
+    contactsData.forEach(contact => {
+      vcfContent += `BEGIN:VCARD\n`;
+      vcfContent += `VERSION:3.0\n`;
+      vcfContent += `FN:${contact.firstName} ${contact.lastName}\n`;
+      vcfContent += `TEL;TYPE=CELL:+${contact.phone}\n`;
+      vcfContent += `NOTE:מספר משתתף: ${contact.pnid}\n`;
+      vcfContent += `END:VCARD\n`;
+    });
+
+    const blob = new Blob([vcfContent], { type: 'text/vcard' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'contacts.vcf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  exportVCFButton.addEventListener('click', exportVCF);
+
+  // The Google Contacts link is a direct link, no need for JS manipulation here.
 
   // [Previous event listeners remain the same]
 </script>
