@@ -4,6 +4,25 @@
 <meta charset="UTF-8">
 <title>WhatsApp Link Generator</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+    /* Optional: Add some basic styling for the new button if needed */
+    .copy-link-button {
+        margin-left: 5px; /* Add space between link and button */
+        /* Add other styles similar to copy-button if desired */
+    }
+    .whatsapp-message div { /* Add some spacing between message lines */
+        margin-bottom: 5px;
+    }
+    .whatsapp-message hr {
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+    /* Style for the copied state */
+    .copy-button.copied, .copy-link-button.copied {
+        background-color: #4CAF50; /* Green background */
+        color: white;
+    }
+</style>
 </head>
 <body>
  <div id="container">
@@ -24,14 +43,12 @@
  </div>
 
  <script>
-  const dropArea = document.getElementById('drop-area');
-  const fileInput = document.getElementById('file-input');
+  // Removed redundant elements no longer in HTML (dropArea, fileInput, browseButton)
   const outputContainer = document.getElementById('output');
-  const browseButton = document.getElementById('browse-button');
   const pasteArea = document.getElementById('paste-area');
   const pasteButton = document.getElementById('paste-button');
   const exportVCFButton = document.getElementById('export-vcf-button');
-  const googleContactsLink = document.getElementById('google-contacts-link');
+  // Removed googleContactsLink as it's directly in HTML now
 
    pasteButton.addEventListener('click', () => {
      const pastedData = pasteArea.value;
@@ -42,46 +59,32 @@
      }
    });
 
-  // [Previous event listeners remain the same]
-
   function sanitizeColumnName(header) {
     // Remove whitespace, convert to lowercase, remove non-alphanumeric characters
     return header.trim().toLowerCase().replace(/[^a-zא-ת0-9]/g, '');
   }
 
-  function handleFileList(files) {
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const csvData = e.target.result;
-          generateWhatsappLinks(csvData);
-        };
-        reader.readAsText(file, 'UTF-8');
-      } else {
-        alert('אנא בחרי קובץ CSV בלבד');
-      }
-    }
-  }
+  // Removed handleFileList function as file input is removed
 
   function sanitizeHebrewText(text) {
     if (!text) return '';
-    return text.trim().replace(/[^\u0590-\u05FF\u0020-\u007E]/g, '').trim();
+    // Keep Hebrew, English letters, numbers, spaces, and basic punctuation
+    return text.trim().replace(/[^\u0590-\u05FFa-zA-Z0-9\s.,!?'":;()/-]/g, '').trim();
   }
 
   let contactsData = []; // To store data for VCF export
 
   function generateWhatsappLinks(csvData) {
     // Clear previous output
+    // Handle tab-separated data pasted from Excel/Sheets
     if (csvData.includes('\t')) {
       csvData = csvData.replace(/\t/g, ',');
     }
     outputContainer.innerHTML = '';
     contactsData = []; // Clear previous data
 
-    // Remove any potential Byte Order Mark and split into rows
-    const normalizedCSVData = csvData.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+    // Remove any potential Byte Order Mark and normalize line endings
+    const normalizedCSVData = csvData.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     const rows = normalizedCSVData.split('\n');
 
     // Parse headers (first row)
@@ -110,7 +113,12 @@
     // Validate column indices
     if (pnidIndex === -1 || firstNameIndex === -1 ||
         lastNameIndex === -1 || phoneIndex === -1) {
-      alert('לא נמצאו כל העמודות הנדרשות. אנא ודיא שהקובץ מכיל את העמודות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון');
+       const missing = [];
+       if (pnidIndex === -1) missing.push("מספר משתתף (e.g., 'pnid', 'participantid')");
+       if (firstNameIndex === -1) missing.push("שם פרטי (e.g., 'firstname', 'פרטי')");
+       if (lastNameIndex === -1) missing.push("שם משפחה (e.g., 'lastname', 'משפחה')");
+       if (phoneIndex === -1) missing.push("מספר טלפון (e.g., 'phone', 'טלפון')");
+      alert(`לא נמצאו כל העמודות הנדרשות. אנא ודאי שהטבלה מכילה עמודות עם כותרות מתאימות עבור:\n- ${missing.join('\n- ')}\n\nהכותרות שנמצאו: ${headers.join(', ')}`);
       return;
     }
 
@@ -119,13 +127,20 @@
       const rowString = rows[i].trim();
       if (!rowString) continue;
 
-      // Robust CSV parsing
+      // Robust CSV parsing considering quoted fields
       const row = [];
       let currentField = '';
       let inQuotes = false;
-      for (let char of rowString) {
-        if (char === '"') {
-          inQuotes = !inQuotes;
+      for (let j = 0; j < rowString.length; j++) {
+        const char = rowString[j];
+        if (char === '"' && (j === 0 || rowString[j-1] !== '\\')) { // Handle escaped quotes if needed later (\")
+            // Check if the quote is doubled "" inside quotes, treat as literal quote
+            if (inQuotes && rowString[j+1] === '"') {
+                currentField += '"';
+                j++; // Skip the next quote
+            } else {
+                inQuotes = !inQuotes;
+            }
         } else if (char === ',' && !inQuotes) {
           row.push(currentField.trim());
           currentField = '';
@@ -133,10 +148,14 @@
           currentField += char;
         }
       }
-      row.push(currentField.trim());
+      row.push(currentField.trim()); // Add the last field
 
-      // Validate row has required fields
-      if (row.length <= Math.max(pnidIndex, firstNameIndex, lastNameIndex, phoneIndex)) continue;
+
+      // Validate row has enough columns based on max index needed
+      if (row.length <= Math.max(pnidIndex, firstNameIndex, lastNameIndex, phoneIndex)) {
+        console.warn(`Skipping row ${i + 1}: Not enough columns. Row content: "${rowString}"`);
+        continue;
+      }
 
       const pnid = row[pnidIndex] || '';
       const firstName = sanitizeHebrewText(row[firstNameIndex] || '');
@@ -144,86 +163,163 @@
       let phone = row[phoneIndex] || '';
 
       // Process phone number
-      if (phone && phone.trim() !== "") {
-        phone = phone.trim();
+      if (phone && phone.trim() !== "" && firstName) { // Added check for firstName to avoid empty entries
+        phone = phone.replace(/[^0-9]/g, ''); // Keep only digits
         if (phone.startsWith('0')) {
           phone = phone.substring(1);
         }
-        phone = `972${phone}`;
+        if (phone.length >= 9) { // Basic validation for Israeli number length
+            phone = `972${phone}`;
 
-        // Store data for VCF
-        contactsData.push({
-          firstName: firstName,
-          lastName: lastName,
-          phone: phone,
-          pnid: pnid
-        });
+            // Store data for VCF
+            contactsData.push({
+              firstName: firstName,
+              lastName: lastName,
+              phone: phone,
+              pnid: pnid
+            });
 
-        // Create message div
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'whatsapp-message';
+            // Create message div
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'whatsapp-message';
 
-        // WhatsApp Link
-        const whatsappLink = document.createElement('a');
-        whatsappLink.href = `https://wa.me/${phone}`;
-        whatsappLink.target = '_blank';
-        whatsappLink.textContent = `https://wa.me/${phone}`;
+            // WhatsApp Link (Top)
+            const whatsappLink = document.createElement('a');
+            whatsappLink.href = `https://wa.me/${phone}`;
+            whatsappLink.target = '_blank';
+            whatsappLink.textContent = `פתח צ'אט עם ${firstName} ${lastName} (${phone.replace('972', '0')})`; // More descriptive link text
+            whatsappLink.style.fontWeight = 'bold'; // Make it stand out
 
-        // Full message content for copying
-        const messageLines = [
-          `${firstName} ${lastName} יקר/ה,`,
-          'תודה שנרשמת למחקר מיקרוביום!',
-          'כחלק מהמחקר אנו מבקשים למלא שאלונים שמטרתם לבדוק את הקשר בין אוכלוסיית החיידקים האישית שלך למצבים הקשורים לבריאות וחולי.',
-          'מצורפים קישורים לשני שאלונים:',
-          '1. שאלון כללי (קל ונגיש למילוי דרך הטלפון)',
-          '2. שאלון תזונתי (מומלץ למילוי דרך מחשב)',
-          '• את השאלונים ניתן למלא באופן דיגיטלי או באופן ידני עם הגעתך לסקר.',
-          '• תוצאות המחקר יישלחו אליך באמצעות השיבא קונקט, תקבל על כך הודעה במייל ואסאמאס.',
-          '',
-          'במידה והקישורים לא נפתחים יש לשמור מספר זה באנשי הקשר',
-          'תודה,',
-          'צוות המחקר',
-          '------',
-          `*שים לב - מספר המשתתף שלך במחקר הוא ${pnid}* `,
-          '*על שינוי/דחיית תאריך נבקש ליידע אותנו כאן בצ\'אט, תודה על שיתוף הפעולה*'
-        ];
 
-        // Create full message text for copying
-        const fullMessageText = messageLines.join('\n');
+            // Full message content for copying
+            const messageLines = [
+              `${firstName} ${lastName} יקר/ה,`,
+              'תודה שנרשמת למחקר מיקרוביום!',
+              'כחלק מהמחקר אנו מבקשים למלא שאלונים שמטרתם לבדוק את הקשר בין אוכלוסיית החיידקים האישית שלך למצבים הקשורים לבריאות וחולי.',
+              'מצורפים קישורים לשני שאלונים:',
+              '1. שאלון כללי (קל ונגיש למילוי דרך הטלפון)',
+              '2. שאלון תזונתי (מומלץ למילוי דרך מחשב)',
+              '• את השאלונים ניתן למלא באופן דיגיטלי או באופן ידני עם הגעתך לסקר.',
+              '• תוצאות המחקר יישלחו אליך באמצעות השיבא קונקט, תקבל על כך הודעה במייל ואסאמאס.',
+              '',
+              'במידה והקישורים לא נפתחים יש לשמור מספר זה באנשי הקשר',
+              'תודה,',
+              'צוות המחקר',
+              '------',
+              `*שים לב - מספר המשתתף שלך במחקר הוא ${pnid}* `,
+              '*על שינוי/דחיית תאריך נבקש ליידע אותנו כאן בצ\'אט, תודה על שיתוף הפעולה*'
+            ];
 
-        // Add copy button
-        const copyButton = createCopyButton(fullMessageText);
-        messageDiv.appendChild(copyButton);
+            // Create full message text for copying
+            const fullMessageText = messageLines.join('\n');
 
-        messageDiv.appendChild(whatsappLink);
-        messageDiv.appendChild(document.createElement('br'));
+             // Create container for buttons
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.marginTop = '10px'; // Add some space above buttons
 
-        // Render message lines
-        messageLines.forEach(line => {
-          const lineElement = document.createElement('div');
-          lineElement.textContent = line;
-          messageDiv.appendChild(lineElement);
-        });
+            // Add Copy Message button
+            const copyMsgButton = createCopyButton(fullMessageText, 'העתיקי הודעה');
+            buttonContainer.appendChild(copyMsgButton);
 
-        // Add a line break between messages
-        messageDiv.appendChild(document.createElement('hr'));
 
-        outputContainer.appendChild(messageDiv);
+            // Add WhatsApp link again (or just keep it at top)
+            messageDiv.appendChild(whatsappLink);
+            messageDiv.appendChild(document.createElement('br'));
+            messageDiv.appendChild(document.createElement('br'));
+
+
+            // Render message lines
+            messageLines.forEach(line => {
+              const lineElement = document.createElement('div');
+               // Simple link detection (optional, adjust regex if needed)
+               if (line.startsWith('http://') || line.startsWith('https://')) {
+                 const linkEl = document.createElement('a');
+                 linkEl.href = line;
+                 linkEl.target = '_blank';
+                 linkEl.textContent = line;
+                 lineElement.appendChild(linkEl);
+               } else {
+                  lineElement.textContent = line;
+               }
+              messageDiv.appendChild(lineElement);
+            });
+
+            // --- START: Add Google Form Link and Copy Button ---
+            const googleFormLinkUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfmzRlxyheTn6xndmsxx4AM3QHGKldZtb3w_QVDMHaPnECMSA/viewform';
+
+            const googleFormLinkElement = document.createElement('a');
+            googleFormLinkElement.href = googleFormLinkUrl;
+            googleFormLinkElement.target = '_blank';
+            googleFormLinkElement.textContent = googleFormLinkUrl;
+
+            const copyLinkFormButton = document.createElement('button');
+            copyLinkFormButton.textContent = 'העתיקי קישור לשאלון';
+            copyLinkFormButton.className = 'copy-link-button'; // Add class for styling
+            copyLinkFormButton.style.marginLeft = '5px'; // Space between link and button
+
+            copyLinkFormButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent triggering other clicks if nested
+                navigator.clipboard.writeText(googleFormLinkUrl).then(() => {
+                    copyLinkFormButton.textContent = 'הועתק!';
+                    copyLinkFormButton.classList.add('copied');
+                    setTimeout(() => {
+                        copyLinkFormButton.textContent = 'העתיקי קישור לשאלון';
+                        copyLinkFormButton.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy link: ', err);
+                    alert('העתקת הקישור נכשלה');
+                });
+            });
+
+            const formLinkContainer = document.createElement('div');
+            formLinkContainer.style.marginTop = '10px'; // Add space above the form link
+            formLinkContainer.appendChild(document.createTextNode('קישור לשאלון כללי: ')); // Add descriptive text
+            formLinkContainer.appendChild(googleFormLinkElement);
+            formLinkContainer.appendChild(copyLinkFormButton);
+
+            messageDiv.appendChild(formLinkContainer); // Add the form link container
+
+             // --- END: Add Google Form Link and Copy Button ---
+
+
+            // Add the button container (with copy message button)
+            messageDiv.appendChild(buttonContainer);
+
+
+            // Add a horizontal line separator
+            messageDiv.appendChild(document.createElement('hr'));
+
+            outputContainer.appendChild(messageDiv);
+         } else {
+             console.warn(`Skipping row ${i+1}: Invalid or incomplete phone number "${row[phoneIndex]}" for ${firstName} ${lastName}`);
+         }
+      } else {
+          // Optionally log skipped rows due to missing phone or name
+          if (!rowString.match(/^,*$/)) { // Avoid logging empty rows
+             console.warn(`Skipping row ${i+1}: Missing phone number or name. Row content: "${rowString}"`);
+          }
       }
     }
+     if (outputContainer.children.length === 0) {
+       outputContainer.innerHTML = '<p style="text-align:center; color: red;">לא נמצאו נתונים תקינים לעיבוד. אנא בדקי את מבנה הטבלה והעמודות.</p>';
+     }
   }
 
-  function createCopyButton(textToCopy) {
+  // Modified createCopyButton to accept button text
+  function createCopyButton(textToCopy, buttonText = 'העתיקי') {
     const copyButton = document.createElement('button');
-    copyButton.textContent = 'העתיקי';
-    copyButton.className = 'copy-button';
+    copyButton.textContent = buttonText;
+    copyButton.className = 'copy-button'; // Use a general class
 
-    copyButton.addEventListener('click', () => {
+    copyButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent triggering other clicks if nested
       navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = copyButton.textContent;
         copyButton.textContent = 'הועתק!';
         copyButton.classList.add('copied');
         setTimeout(() => {
-          copyButton.textContent = 'העתיקי';
+          copyButton.textContent = originalText;
           copyButton.classList.remove('copied');
         }, 2000);
       }).catch(err => {
@@ -237,21 +333,31 @@
 
   function exportVCF() {
     if (contactsData.length === 0) {
-      alert('לא נוצרו אנשי קשר לייצוא.');
+      alert('לא נוצרו אנשי קשר לייצוא. יש ליצור קישורים תחילה.');
       return;
     }
 
     let vcfContent = '';
     contactsData.forEach(contact => {
+      // Ensure names are properly encoded for VCF if they contain non-ASCII
+      const encodedFirstName = contact.firstName; // Simple assignment, potentially needs base64 for complex chars
+      const encodedLastName = contact.lastName; // Simple assignment
+      const fullName = `${encodedFirstName} ${encodedLastName}`;
+
       vcfContent += `BEGIN:VCARD\n`;
       vcfContent += `VERSION:3.0\n`;
-      vcfContent += `FN:${contact.firstName} ${contact.lastName}\n`;
+      // FN property is usually required
+      vcfContent += `FN;CHARSET=UTF-8:${fullName}\n`;
+      // N property for structured name
+      vcfContent += `N;CHARSET=UTF-8:${encodedLastName};${encodedFirstName};;;\n`; // Last;First;Middle;Prefix;Suffix
       vcfContent += `TEL;TYPE=CELL:+${contact.phone}\n`;
-      vcfContent += `NOTE:מספר משתתף: ${contact.pnid}\n`;
+      // Add PNID to NOTE field, ensuring proper encoding
+      vcfContent += `NOTE;CHARSET=UTF-8:מספר משתתף: ${contact.pnid}\n`;
       vcfContent += `END:VCARD\n`;
     });
 
-    const blob = new Blob([vcfContent], { type: 'text/vcard' });
+    // Ensure UTF-8 BOM for better compatibility with various contact apps
+    const blob = new Blob(['\uFEFF' + vcfContent], { type: 'text/vcard;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
