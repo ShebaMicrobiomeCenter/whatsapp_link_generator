@@ -72,10 +72,10 @@
 
   let contactsData = []; // To store data for VCF export
 
-function generateWhatsappLinks(csvData) {
+  function generateWhatsappLinks(csvData) {
     // Clear previous output
     if (csvData.includes('\t')) {
-        csvData = csvData.replace(/\t/g, ',');
+      csvData = csvData.replace(/\t/g, ',');
     }
     outputContainer.innerHTML = '';
     contactsData = []; // Clear previous data
@@ -89,17 +89,17 @@ function generateWhatsappLinks(csvData) {
 
     // Define column name patterns
     const columnPatterns = {
-        pnid: ['pnid', 'participantid', 'מספרמשתתף', 'participant', 'number'],
-        firstName: ['firstname', 'first', 'פרטי'],
-        lastName: ['lastname', 'last', 'משפחה'],
-        phone: ['phone', 'phonenumber', 'מספרטלפון', 'טלפון']
-    };
+       pnid: ['pnid', 'participantid', 'מספרמשתתף', 'participant', 'number'],
+       firstName: ['firstname', 'first', 'פרטי'],
+       lastName: ['lastname', 'last', 'משפחה'],
+       phone: ['phone', 'phonenumber', 'מספרטלפון', 'טלפון']
+     };
 
     // Find column indices with more flexible matching
     const findColumnIndex = (patterns) => {
-        return headers.findIndex(header =>
-            patterns.some(pattern => header.includes(pattern))
-        );
+      return headers.findIndex(header =>
+        patterns.some(pattern => header.includes(pattern))
+      );
     };
 
     const pnidIndex = findColumnIndex(columnPatterns.pnid);
@@ -110,137 +110,130 @@ function generateWhatsappLinks(csvData) {
     // Validate column indices
     if (pnidIndex === -1 || firstNameIndex === -1 ||
         lastNameIndex === -1 || phoneIndex === -1) {
-        alert('לא נמצאו כל העמודות הנדרשות. אנא ודיא שהקובץ מכיל את העמודות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון');
-        return;
+      alert('לא נמצאו כל העמודות הנדרשות. אנא ודיא שהקובץ מכיל את העמודות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון');
+      return;
     }
 
     // Process each row
     for (let i = 1; i < rows.length; i++) {
-        const rowString = rows[i].trim();
-        if (!rowString) continue;
+      const rowString = rows[i].trim();
+      if (!rowString) continue;
 
-        // Robust CSV parsing
-        const row = [];
-        let currentField = '';
-        let inQuotes = false;
-        for (let char of rowString) {
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                row.push(currentField.trim());
-                currentField = '';
-            } else {
-                currentField += char;
-            }
+      // Robust CSV parsing
+      const row = [];
+      let currentField = '';
+      let inQuotes = false;
+      for (let char of rowString) {
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          row.push(currentField.trim());
+          currentField = '';
+        } else {
+          currentField += char;
         }
-        row.push(currentField.trim());
+      }
+      row.push(currentField.trim());
 
-        // Validate row has required fields
-        if (row.length <= Math.max(pnidIndex, firstNameIndex, lastNameIndex, phoneIndex)) continue;
+      // Validate row has required fields
+      if (row.length <= Math.max(pnidIndex, firstNameIndex, lastNameIndex, phoneIndex)) continue;
 
-        const pnid = row[pnidIndex] || '';
-        const firstName = sanitizeHebrewText(row[firstNameIndex] || '');
-        const lastName = sanitizeHebrewText(row[lastNameIndex] || '');
-        let phone = row[phoneIndex] || '';
+      const pnid = row[pnidIndex] || '';
+      const firstName = sanitizeHebrewText(row[firstNameIndex] || '');
+      const lastName = sanitizeHebrewText(row[lastNameIndex] || '');
+      let phone = row[phoneIndex] || '';
 
-        // Process phone number
-        if (phone && phone.trim() !== "") {
-            phone = phone.trim();
-            if (phone.startsWith('0')) {
-                phone = phone.substring(1);
-            }
-            phone = `972${phone}`;
-
-            // Store data for VCF
-            contactsData.push({
-                firstName: firstName,
-                lastName: lastName,
-                phone: phone,
-                pnid: pnid
-            });
-
-            // Create message div
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'whatsapp-message';
-
-            // WhatsApp Link
-            const whatsappLink = document.createElement('a');
-            whatsappLink.href = `https://wa.me/${phone}`;
-            whatsappLink.target = '_blank';
-            whatsappLink.textContent = `https://wa.me/${phone}`;
-
-            // Full message content for copying
-            const messageLines = [
-                `${firstName} ${lastName} יקר/ה,`,
-                'תודה שנרשמת למחקר מיקרוביום!',
-                'כחלק מהמחקר אנו מבקשים למלא שאלונים שמטרתם לבדוק את הקשר בין אוכלוסיית החיידקים האישית שלך למצבים הקשו�[...]',
-                'מצורפים קישורים לשני שאלונים:',
-                '1. שאלון כללי (קל ונגיש למילוי דרך הטלפון)',
-                '2. שאלון תזונתי (מומלץ למילוי דרך מחשב)',
-                '• את השאלונים ניתן למלא באופן דיגיטלי או באופן ידני עם הגעתך לסקר.',
-                '• תוצאות המחקר יישלחו אליך באמצעות השיבא קונקט, תקבל על כך הודעה במייל ואסאמאס.',
-                '',
-                'במידה והקישורים לא נפתחים יש לשמור מספר זה באנשי הקשר',
-                'תודה,',
-                'צוות המחקר',
-                '------',
-                `*שים לב - מספר המשתתף שלך במחקר הוא ${pnid}* `,
-                '*על שינוי/דחיית תאריך נבקש ליידע אותנו כאן בצ\'אט, תודה על שיתוף הפעולה*'
-            ];
-
-            // Add copy button for the Google Forms link
-            const googleFormCopyButton = createCopyButton(
-                'העתיקי קישור',
-                'https://docs.google.com/forms/d/e/1FAIpQLSfmzRlxyheTn6xndmsxx4AM3QHGKldZtb3w_QVDMHaPnECMSA/viewform'
-            );
-            messageDiv.appendChild(googleFormCopyButton);
-
-            // Create full message text for copying
-            const fullMessageText = messageLines.join('\n');
-
-            // Add copy button for the full message
-            const copyButton = createCopyButton('העתיקי הודעה', fullMessageText);
-            messageDiv.appendChild(copyButton);
-
-            messageDiv.appendChild(whatsappLink);
-            messageDiv.appendChild(document.createElement('br'));
-
-            // Render message lines
-            messageLines.forEach(line => {
-                const lineElement = document.createElement('div');
-                lineElement.textContent = line;
-                messageDiv.appendChild(lineElement);
-            });
-
-            // Add a line break between messages
-            messageDiv.appendChild(document.createElement('hr'));
-
-            outputContainer.appendChild(messageDiv);
+      // Process phone number
+      if (phone && phone.trim() !== "") {
+        phone = phone.trim();
+        if (phone.startsWith('0')) {
+          phone = phone.substring(1);
         }
+        phone = `972${phone}`;
+
+        // Store data for VCF
+        contactsData.push({
+          firstName: firstName,
+          lastName: lastName,
+          phone: phone,
+          pnid: pnid
+        });
+
+        // Create message div
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'whatsapp-message';
+
+        // WhatsApp Link
+        const whatsappLink = document.createElement('a');
+        whatsappLink.href = `https://wa.me/${phone}`;
+        whatsappLink.target = '_blank';
+        whatsappLink.textContent = `https://wa.me/${phone}`;
+
+        // Full message content for copying
+        const messageLines = [
+          `${firstName} ${lastName} יקר/ה,`,
+          'תודה שנרשמת למחקר מיקרוביום!',
+          'כחלק מהמחקר אנו מבקשים למלא שאלונים שמטרתם לבדוק את הקשר בין אוכלוסיית החיידקים האישית שלך למצבים הקשורים לבריאות וחולי.',
+          'מצורפים קישורים לשני שאלונים:',
+          '1. שאלון כללי (קל ונגיש למילוי דרך הטלפון)',
+          '2. שאלון תזונתי (מומלץ למילוי דרך מחשב)',
+          '• את השאלונים ניתן למלא באופן דיגיטלי או באופן ידני עם הגעתך לסקר.',
+          '• תוצאות המחקר יישלחו אליך באמצעות השיבא קונקט, תקבל על כך הודעה במייל ואסאמאס.',
+          '',
+          'במידה והקישורים לא נפתחים יש לשמור מספר זה באנשי הקשר',
+          'תודה,',
+          'צוות המחקר',
+          '------',
+          `*שים לב - מספר המשתתף שלך במחקר הוא ${pnid}* `,
+          '*על שינוי/דחיית תאריך נבקש ליידע אותנו כאן בצ\'אט, תודה על שיתוף הפעולה*'
+        ];
+
+        // Create full message text for copying
+        const fullMessageText = messageLines.join('\n');
+
+        // Add copy button
+        const copyButton = createCopyButton(fullMessageText);
+        messageDiv.appendChild(copyButton);
+
+        messageDiv.appendChild(whatsappLink);
+        messageDiv.appendChild(document.createElement('br'));
+
+        // Render message lines
+        messageLines.forEach(line => {
+          const lineElement = document.createElement('div');
+          lineElement.textContent = line;
+          messageDiv.appendChild(lineElement);
+        });
+
+        // Add a line break between messages
+        messageDiv.appendChild(document.createElement('hr'));
+
+        outputContainer.appendChild(messageDiv);
+      }
     }
-}
+  }
 
-function createCopyButton(buttonText, textToCopy) {
+  function createCopyButton(textToCopy) {
     const copyButton = document.createElement('button');
-    copyButton.textContent = buttonText;
+    copyButton.textContent = 'העתיקי';
     copyButton.className = 'copy-button';
 
     copyButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            copyButton.textContent = 'הועתק!';
-            copyButton.classList.add('copied');
-            setTimeout(() => {
-                copyButton.textContent = buttonText;
-                copyButton.classList.remove('copied');
-            }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-            alert('העתקה נכשלה');
-        });
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyButton.textContent = 'הועתק!';
+        copyButton.classList.add('copied');
+        setTimeout(() => {
+          copyButton.textContent = 'העתיקי';
+          copyButton.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert('העתקה נכשלה');
+      });
     });
 
     return copyButton;
-}
+  }
 
   function exportVCF() {
     if (contactsData.length === 0) {
