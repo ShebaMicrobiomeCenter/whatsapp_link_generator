@@ -3,25 +3,148 @@
 <head>
 <meta charset="UTF-8">
 <title>WhatsApp Link Generator</title>
-<link rel="stylesheet" href="styles.css">
+<!-- Removed link to external styles.css, using internal styles -->
 <style>
-    /* Optional: Add some basic styling for the new button if needed */
-    .copy-link-button {
-        margin-left: 5px; /* Add space between link and button */
-        /* Add other styles similar to copy-button if desired */
+    body {
+        font-family: 'Arial', sans-serif;
+        direction: rtl; /* Right-to-left layout */
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+        display: flex;
+        justify-content: center;
     }
-    .whatsapp-message div { /* Add some spacing between message lines */
-        margin-bottom: 5px;
+    #container {
+        background-color: #fff;
+        padding: 20px 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        max-width: 800px;
+        width: 100%;
+    }
+    h1, h2 {
+        text-align: center;
+        color: #333;
+    }
+    textarea {
+        width: 98%;
+        min-height: 100px;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        resize: vertical; /* Allow vertical resizing */
+        font-family: inherit; /* Use body font */
+    }
+    button {
+        padding: 10px 18px;
+        background-color: #25D366; /* WhatsApp green */
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+        display: block; /* Make main buttons block level */
+        margin: 10px auto; /* Center main buttons */
+    }
+    button:hover {
+        background-color: #1DA851;
+    }
+    #output {
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .whatsapp-message {
+        border: 1px solid #e0e0e0;
+        background-color: #f9f9f9;
+        padding: 15px;
+        margin-bottom: 25px; /* Increased margin for better separation */
+        border-radius: 5px;
+        position: relative; /* For positioning elements if needed */
+    }
+    .whatsapp-message div {
+        margin-bottom: 6px; /* Spacing between message lines */
+        line-height: 1.5;
     }
     .whatsapp-message hr {
-      margin-top: 15px;
-      margin-bottom: 15px;
+       display: none; /* Hide the default HR, separation handled by message block border/margin */
     }
-    /* Style for the copied state */
-    .copy-button.copied, .copy-link-button.copied {
-        background-color: #4CAF50; /* Green background */
+    .whatsapp-message a {
+        color: #0056b3;
+        text-decoration: none;
+    }
+     .whatsapp-message a:hover {
+        text-decoration: underline;
+    }
+    .whatsapp-link-top {
+        font-weight: bold;
+        margin-bottom: 15px !important; /* Extra space below top link */
+        display: block; /* Ensure it takes full width */
+        font-size: 1.1em;
+    }
+
+    /* Common styles for copy buttons */
+    .copy-btn {
+        padding: 6px 12px; /* Smaller padding */
+        font-size: 13px;
+        background-color: #6c757d; /* Grey */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        display: inline-block; /* Allow inline display */
+        margin: 0; /* Reset margin */
+    }
+    .copy-btn:hover {
+        background-color: #5a6268;
+    }
+    .copy-btn.copied {
+        background-color: #28a745; /* Success green */
         color: white;
     }
+
+    /* Container for the main "Copy Message" button */
+    .copy-message-container {
+        margin-top: 15px; /* Space above copy message button */
+        text-align: left; /* Align button to the left */
+    }
+
+    /* Container for the form link and its copy button */
+    .form-link-container {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #ececec; /* Slightly different background */
+        border-radius: 4px;
+        display: flex; /* Use flexbox for layout */
+        justify-content: space-between; /* Push button to the end */
+        align-items: center; /* Vertically align items */
+        width: 100%; /* Ensure it takes full width */
+        box-sizing: border-box; /* Include padding in width */
+    }
+    .form-link-text a {
+        margin-left: 10px; /* Space between text and link */
+    }
+    .copy-link-btn {
+       /* Specific styles for copy link button if needed, inherits from .copy-btn */
+       margin-right: auto; /* Push link text to the left */
+       margin-left: 10px; /* Space between link and button */
+    }
+
+    #vcf-instructions {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #555;
+        line-height: 1.6;
+    }
+    #vcf-instructions a {
+        color: #0056b3;
+    }
+
 </style>
 </head>
 <body>
@@ -29,13 +152,14 @@
    <h1>WhatsApp Link Generator</h1>
 
    <h2> הדביקי טבלה:</h2>
-   <textarea id="paste-area" placeholder="הדביקי טבלה מקובץ Excel כאן..."></textarea>
+   <textarea id="paste-area" placeholder="הדביקי טבלה מקובץ Excel כאן...
+העמודות הנדרשות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון"></textarea>
    <button id="paste-button">צרי קישורים</button>
 
   <div id="output"></div>
 
   <button id="export-vcf-button">ייצאי קובץ אנשי קשר (VCF)</button>
-  <p id="vcf-instructions" style="text-align: center;">
+  <p id="vcf-instructions">
     לאחר הורדת קובץ ה-VCF, פתחי את <a href="https://contacts.google.com/" target="_blank">Google Contacts</a>.<br>
     חפשי אפשרות בשם <strong>"יבאי"</strong> או <strong>"Import"</strong>. <br>
     לרוב, אפשרות זו נמצאת בתפריט הצדדי, או תחת הגדרות (סמל גלגל השיניים).
@@ -43,14 +167,12 @@
  </div>
 
  <script>
-  // Removed redundant elements no longer in HTML (dropArea, fileInput, browseButton)
   const outputContainer = document.getElementById('output');
   const pasteArea = document.getElementById('paste-area');
   const pasteButton = document.getElementById('paste-button');
   const exportVCFButton = document.getElementById('export-vcf-button');
-  // Removed googleContactsLink as it's directly in HTML now
 
-   pasteButton.addEventListener('click', () => {
+  pasteButton.addEventListener('click', () => {
      const pastedData = pasteArea.value;
      if (pastedData.trim() !== '') {
        generateWhatsappLinks(pastedData);
@@ -60,45 +182,40 @@
    });
 
   function sanitizeColumnName(header) {
-    // Remove whitespace, convert to lowercase, remove non-alphanumeric characters
     return header.trim().toLowerCase().replace(/[^a-zא-ת0-9]/g, '');
   }
 
-  // Removed handleFileList function as file input is removed
-
   function sanitizeHebrewText(text) {
     if (!text) return '';
-    // Keep Hebrew, English letters, numbers, spaces, and basic punctuation
     return text.trim().replace(/[^\u0590-\u05FFa-zA-Z0-9\s.,!?'":;()/-]/g, '').trim();
   }
 
   let contactsData = []; // To store data for VCF export
 
   function generateWhatsappLinks(csvData) {
-    // Clear previous output
-    // Handle tab-separated data pasted from Excel/Sheets
     if (csvData.includes('\t')) {
       csvData = csvData.replace(/\t/g, ',');
     }
     outputContainer.innerHTML = '';
-    contactsData = []; // Clear previous data
+    contactsData = [];
 
-    // Remove any potential Byte Order Mark and normalize line endings
     const normalizedCSVData = csvData.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     const rows = normalizedCSVData.split('\n');
 
-    // Parse headers (first row)
+    if (rows.length <= 1 && rows[0].trim() === '') {
+        alert('הנתונים שהודבקו ריקים או לא תקינים.');
+        return;
+    }
+
     const headers = rows[0].split(',').map(header => sanitizeColumnName(header));
 
-    // Define column name patterns
     const columnPatterns = {
-       pnid: ['pnid', 'participantid', 'מספרמשתתף', 'participant', 'number'],
+       pnid: ['pnid', 'participantid', 'מספרמשתתף', 'participant', 'number', 'sk'], // Added 'sk'
        firstName: ['firstname', 'first', 'פרטי'],
        lastName: ['lastname', 'last', 'משפחה'],
-       phone: ['phone', 'phonenumber', 'מספרטלפון', 'טלפון']
+       phone: ['phone', 'phonenumber', 'מספרטלפון', 'טלפון', 'נייד', 'mobile'] // Added mobile
      };
 
-    // Find column indices with more flexible matching
     const findColumnIndex = (patterns) => {
       return headers.findIndex(header =>
         patterns.some(pattern => header.includes(pattern))
@@ -110,88 +227,68 @@
     const lastNameIndex = findColumnIndex(columnPatterns.lastName);
     const phoneIndex = findColumnIndex(columnPatterns.phone);
 
-    // Validate column indices
     if (pnidIndex === -1 || firstNameIndex === -1 ||
         lastNameIndex === -1 || phoneIndex === -1) {
        const missing = [];
-       if (pnidIndex === -1) missing.push("מספר משתתף (e.g., 'pnid', 'participantid')");
-       if (firstNameIndex === -1) missing.push("שם פרטי (e.g., 'firstname', 'פרטי')");
-       if (lastNameIndex === -1) missing.push("שם משפחה (e.g., 'lastname', 'משפחה')");
-       if (phoneIndex === -1) missing.push("מספר טלפון (e.g., 'phone', 'טלפון')");
-      alert(`לא נמצאו כל העמודות הנדרשות. אנא ודאי שהטבלה מכילה עמודות עם כותרות מתאימות עבור:\n- ${missing.join('\n- ')}\n\nהכותרות שנמצאו: ${headers.join(', ')}`);
+       if (pnidIndex === -1) missing.push("מספר משתתף (כותרת לדוגמה: 'pnid', 'מספר משתתף', 'sk')");
+       if (firstNameIndex === -1) missing.push("שם פרטי (כותרת לדוגמה: 'firstname', 'פרטי')");
+       if (lastNameIndex === -1) missing.push("שם משפחה (כותרת לדוגמה: 'lastname', 'משפחה')");
+       if (phoneIndex === -1) missing.push("מספר טלפון (כותרת לדוגמה: 'phone', 'טלפון', 'נייד')");
+      alert(`לא נמצאו כל העמודות הנדרשות. אנא ודאי שהטבלה מכילה עמודות עם כותרות מתאימות עבור:\n- ${missing.join('\n- ')}\n\nהכותרות שנמצאו בשורה הראשונה: ${headers.join(', ')}`);
       return;
     }
 
-    // Process each row
+    let generatedCount = 0; // Count generated messages
+
     for (let i = 1; i < rows.length; i++) {
       const rowString = rows[i].trim();
       if (!rowString) continue;
 
-      // Robust CSV parsing considering quoted fields
-      const row = [];
-      let currentField = '';
-      let inQuotes = false;
-      for (let j = 0; j < rowString.length; j++) {
-        const char = rowString[j];
-        if (char === '"' && (j === 0 || rowString[j-1] !== '\\')) { // Handle escaped quotes if needed later (\")
-            // Check if the quote is doubled "" inside quotes, treat as literal quote
-            if (inQuotes && rowString[j+1] === '"') {
-                currentField += '"';
-                j++; // Skip the next quote
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (char === ',' && !inQuotes) {
-          row.push(currentField.trim());
-          currentField = '';
-        } else {
-          currentField += char;
-        }
-      }
-      row.push(currentField.trim()); // Add the last field
+      const row = parseCsvRow(rowString); // Use helper function for parsing
 
-
-      // Validate row has enough columns based on max index needed
       if (row.length <= Math.max(pnidIndex, firstNameIndex, lastNameIndex, phoneIndex)) {
         console.warn(`Skipping row ${i + 1}: Not enough columns. Row content: "${rowString}"`);
         continue;
       }
 
-      const pnid = row[pnidIndex] || '';
+      const pnid = (row[pnidIndex] || '').trim();
       const firstName = sanitizeHebrewText(row[firstNameIndex] || '');
       const lastName = sanitizeHebrewText(row[lastNameIndex] || '');
-      let phone = row[phoneIndex] || '';
+      let phone = (row[phoneIndex] || '').trim();
 
-      // Process phone number
-      if (phone && phone.trim() !== "" && firstName) { // Added check for firstName to avoid empty entries
-        phone = phone.replace(/[^0-9]/g, ''); // Keep only digits
+      if (phone && firstName) {
+        phone = phone.replace(/[^0-9]/g, '');
+        if (phone.startsWith('972') && phone.length > 9) { // Handle cases where 972 is already present
+             phone = phone.substring(3); // Remove existing 972 if user pasted it
+        }
         if (phone.startsWith('0')) {
           phone = phone.substring(1);
         }
-        if (phone.length >= 9) { // Basic validation for Israeli number length
-            phone = `972${phone}`;
 
-            // Store data for VCF
+        if (phone.length >= 9 && phone.length <= 10) { // Validate Israeli number length (9 or 10 digits after 0)
+            const fullPhone = `972${phone}`;
+            const displayPhone = `0${phone}`; // For display purposes
+
             contactsData.push({
               firstName: firstName,
               lastName: lastName,
-              phone: phone,
+              phone: fullPhone,
               pnid: pnid
             });
 
-            // Create message div
+            // Create message container div
             const messageDiv = document.createElement('div');
             messageDiv.className = 'whatsapp-message';
 
-            // WhatsApp Link (Top)
-            const whatsappLink = document.createElement('a');
-            whatsappLink.href = `https://wa.me/${phone}`;
-            whatsappLink.target = '_blank';
-            whatsappLink.textContent = `פתח צ'אט עם ${firstName} ${lastName} (${phone.replace('972', '0')})`; // More descriptive link text
-            whatsappLink.style.fontWeight = 'bold'; // Make it stand out
+            // 1. WhatsApp Link (Top)
+            const whatsappLinkTop = document.createElement('a');
+            whatsappLinkTop.href = `https://wa.me/${fullPhone}`;
+            whatsappLinkTop.target = '_blank';
+            whatsappLinkTop.textContent = `פתח צ'אט עם ${firstName} ${lastName} (${displayPhone})`;
+            whatsappLinkTop.className = 'whatsapp-link-top'; // Apply specific class
+            messageDiv.appendChild(whatsappLinkTop);
 
-
-            // Full message content for copying
+            // 2. Message Body
             const messageLines = [
               `${firstName} ${lastName} יקר/ה,`,
               'תודה שנרשמת למחקר מיקרוביום!',
@@ -210,28 +307,10 @@
               '*על שינוי/דחיית תאריך נבקש ליידע אותנו כאן בצ\'אט, תודה על שיתוף הפעולה*'
             ];
 
-            // Create full message text for copying
-            const fullMessageText = messageLines.join('\n');
+            const fullMessageText = messageLines.join('\n'); // For the copy button
 
-             // Create container for buttons
-            const buttonContainer = document.createElement('div');
-            buttonContainer.style.marginTop = '10px'; // Add some space above buttons
-
-            // Add Copy Message button
-            const copyMsgButton = createCopyButton(fullMessageText, 'העתיקי הודעה');
-            buttonContainer.appendChild(copyMsgButton);
-
-
-            // Add WhatsApp link again (or just keep it at top)
-            messageDiv.appendChild(whatsappLink);
-            messageDiv.appendChild(document.createElement('br'));
-            messageDiv.appendChild(document.createElement('br'));
-
-
-            // Render message lines
             messageLines.forEach(line => {
               const lineElement = document.createElement('div');
-               // Simple link detection (optional, adjust regex if needed)
                if (line.startsWith('http://') || line.startsWith('https://')) {
                  const linkEl = document.createElement('a');
                  linkEl.href = line;
@@ -239,95 +318,124 @@
                  linkEl.textContent = line;
                  lineElement.appendChild(linkEl);
                } else {
-                  lineElement.textContent = line;
+                  lineElement.textContent = line || '\u00A0'; // Add non-breaking space for empty lines
                }
               messageDiv.appendChild(lineElement);
             });
 
-            // --- START: Add Google Form Link and Copy Button ---
-            const googleFormLinkUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfmzRlxyheTn6xndmsxx4AM3QHGKldZtb3w_QVDMHaPnECMSA/viewform';
+             // 3. Container for the "Copy Message" button
+             const copyMessageContainer = document.createElement('div');
+             copyMessageContainer.className = 'copy-message-container';
+             const copyMsgButton = createCopyButton(fullMessageText, 'העתיקי הודעה', 'copy-message-btn');
+             copyMessageContainer.appendChild(copyMsgButton);
+             messageDiv.appendChild(copyMessageContainer); // Add below message text
 
+
+            // 4. Google Form Link Section
+            const googleFormLinkUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfmzRlxyheTn6xndmsxx4AM3QHGKldZtb3w_QVDMHaPnECMSA/viewform';
+            const formLinkContainer = document.createElement('div');
+            formLinkContainer.className = 'form-link-container'; // Apply class for styling
+
+            // Create text and link span
+            const formLinkTextSpan = document.createElement('span');
+            formLinkTextSpan.className = 'form-link-text';
+            formLinkTextSpan.appendChild(document.createTextNode('קישור לשאלון כללי: '));
             const googleFormLinkElement = document.createElement('a');
             googleFormLinkElement.href = googleFormLinkUrl;
             googleFormLinkElement.target = '_blank';
-            googleFormLinkElement.textContent = googleFormLinkUrl;
+            googleFormLinkElement.textContent = googleFormLinkUrl; // Show full URL or shorter text if preferred
+            formLinkTextSpan.appendChild(googleFormLinkElement);
 
-            const copyLinkFormButton = document.createElement('button');
-            copyLinkFormButton.textContent = 'העתיקי קישור לשאלון';
-            copyLinkFormButton.className = 'copy-link-button'; // Add class for styling
-            copyLinkFormButton.style.marginLeft = '5px'; // Space between link and button
+            // Create copy button
+            const copyLinkFormButton = createCopyButton(googleFormLinkUrl, 'העתיקי קישור', 'copy-link-btn');
 
-            copyLinkFormButton.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent triggering other clicks if nested
-                navigator.clipboard.writeText(googleFormLinkUrl).then(() => {
-                    copyLinkFormButton.textContent = 'הועתק!';
-                    copyLinkFormButton.classList.add('copied');
-                    setTimeout(() => {
-                        copyLinkFormButton.textContent = 'העתיקי קישור לשאלון';
-                        copyLinkFormButton.classList.remove('copied');
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy link: ', err);
-                    alert('העתקת הקישור נכשלה');
-                });
-            });
+            // Append elements to container (order matters for flexbox justification)
+            formLinkContainer.appendChild(formLinkTextSpan); // Text + Link on the left
+            formLinkContainer.appendChild(copyLinkFormButton); // Button on the right
 
-            const formLinkContainer = document.createElement('div');
-            formLinkContainer.style.marginTop = '10px'; // Add space above the form link
-            formLinkContainer.appendChild(document.createTextNode('קישור לשאלון כללי: ')); // Add descriptive text
-            formLinkContainer.appendChild(googleFormLinkElement);
-            formLinkContainer.appendChild(copyLinkFormButton);
+            messageDiv.appendChild(formLinkContainer); // Add below copy message button
 
-            messageDiv.appendChild(formLinkContainer); // Add the form link container
-
-             // --- END: Add Google Form Link and Copy Button ---
-
-
-            // Add the button container (with copy message button)
-            messageDiv.appendChild(buttonContainer);
-
-
-            // Add a horizontal line separator
-            messageDiv.appendChild(document.createElement('hr'));
+            // --- (Separator is now handled by .whatsapp-message margin) ---
 
             outputContainer.appendChild(messageDiv);
+            generatedCount++; // Increment count
          } else {
-             console.warn(`Skipping row ${i+1}: Invalid or incomplete phone number "${row[phoneIndex]}" for ${firstName} ${lastName}`);
+             console.warn(`Skipping row ${i+1}: Invalid or incomplete phone number "${row[phoneIndex]}" for ${firstName} ${lastName}. Expected 9 or 10 digits after leading 0.`);
          }
       } else {
-          // Optionally log skipped rows due to missing phone or name
-          if (!rowString.match(/^,*$/)) { // Avoid logging empty rows
-             console.warn(`Skipping row ${i+1}: Missing phone number or name. Row content: "${rowString}"`);
+          if (!rowString.match(/^,*$/)) {
+             console.warn(`Skipping row ${i+1}: Missing phone number or first name. Row content: "${rowString}"`);
           }
       }
     }
-     if (outputContainer.children.length === 0) {
-       outputContainer.innerHTML = '<p style="text-align:center; color: red;">לא נמצאו נתונים תקינים לעיבוד. אנא בדקי את מבנה הטבלה והעמודות.</p>';
+
+     if (generatedCount === 0) {
+       outputContainer.innerHTML = '<p style="text-align:center; color: red;">לא נוצרו קישורים. אנא בדקי את הנתונים שהודבקו ואת כותרות העמודות (השורה הראשונה). ודאי שיש נתונים תקינים של שם פרטי ומספר טלפון.</p>';
+     } else {
+         // Optional: Add a summary message
+         const summary = document.createElement('p');
+         summary.textContent = `נוצרו ${generatedCount} הודעות.`;
+         summary.style.textAlign = 'center';
+         summary.style.fontWeight = 'bold';
+         outputContainer.insertBefore(summary, outputContainer.firstChild);
      }
   }
 
-  // Modified createCopyButton to accept button text
-  function createCopyButton(textToCopy, buttonText = 'העתיקי') {
+  // Helper function for robust CSV row parsing
+  function parseCsvRow(rowString) {
+      const row = [];
+      let currentField = '';
+      let inQuotes = false;
+      for (let j = 0; j < rowString.length; j++) {
+          const char = rowString[j];
+          const nextChar = rowString[j+1];
+
+          if (char === '"') {
+              if (inQuotes && nextChar === '"') {
+                  // Handle escaped double quote ("") inside quoted field
+                  currentField += '"';
+                  j++; // Skip the next quote
+              } else {
+                  inQuotes = !inQuotes;
+                  // Optionally ignore the quote character itself unless escaped
+              }
+          } else if (char === ',' && !inQuotes) {
+              row.push(currentField.trim());
+              currentField = '';
+          } else {
+              currentField += char;
+          }
+      }
+      row.push(currentField.trim()); // Add the last field
+      return row;
+  }
+
+
+  // Modified createCopyButton to accept an additional specific class
+  function createCopyButton(textToCopy, buttonText = 'העתיקי', specificClass = '') {
     const copyButton = document.createElement('button');
     copyButton.textContent = buttonText;
-    copyButton.className = 'copy-button'; // Use a general class
+    // Apply base class and specific class
+    copyButton.className = `copy-btn ${specificClass}`.trim();
 
     copyButton.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent triggering other clicks if nested
+      e.stopPropagation();
       navigator.clipboard.writeText(textToCopy).then(() => {
         const originalText = copyButton.textContent;
         copyButton.textContent = 'הועתק!';
         copyButton.classList.add('copied');
+        // Disable button briefly to prevent rapid clicks
+        copyButton.disabled = true;
         setTimeout(() => {
           copyButton.textContent = originalText;
           copyButton.classList.remove('copied');
-        }, 2000);
+          copyButton.disabled = false;
+        }, 1500); // Shorter timeout
       }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        alert('העתקה נכשלה');
+        console.error('Failed to copy: ', err);
+        alert('העתקה נכשלה. בדקי הרשאות דפדפן.');
       });
     });
-
     return copyButton;
   }
 
@@ -339,25 +447,17 @@
 
     let vcfContent = '';
     contactsData.forEach(contact => {
-      // Ensure names are properly encoded for VCF if they contain non-ASCII
-      const encodedFirstName = contact.firstName; // Simple assignment, potentially needs base64 for complex chars
-      const encodedLastName = contact.lastName; // Simple assignment
-      const fullName = `${encodedFirstName} ${encodedLastName}`;
-
+      const fullName = `${contact.firstName} ${contact.lastName}`;
       vcfContent += `BEGIN:VCARD\n`;
       vcfContent += `VERSION:3.0\n`;
-      // FN property is usually required
       vcfContent += `FN;CHARSET=UTF-8:${fullName}\n`;
-      // N property for structured name
-      vcfContent += `N;CHARSET=UTF-8:${encodedLastName};${encodedFirstName};;;\n`; // Last;First;Middle;Prefix;Suffix
+      vcfContent += `N;CHARSET=UTF-8:${contact.lastName};${contact.firstName};;;\n`;
       vcfContent += `TEL;TYPE=CELL:+${contact.phone}\n`;
-      // Add PNID to NOTE field, ensuring proper encoding
-      vcfContent += `NOTE;CHARSET=UTF-8:מספר משתתף: ${contact.pnid}\n`;
+      vcfContent += `NOTE;CHARSET=UTF-8:מספר משתתף: ${contact.pnid}\n`; // Correct UTF-8 Note
       vcfContent += `END:VCARD\n`;
     });
 
-    // Ensure UTF-8 BOM for better compatibility with various contact apps
-    const blob = new Blob(['\uFEFF' + vcfContent], { type: 'text/vcard;charset=utf-8' });
+    const blob = new Blob(['\uFEFF' + vcfContent], { type: 'text/vcard;charset=utf-8' }); // Add BOM
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
