@@ -34,10 +34,10 @@
         border: 1px solid #ccc;
         border-radius: 4px;
         font-size: 14px;
-        resize: vertical; /* Allow vertical resizing */
-        font-family: inherit; /* Use body font */
+        resize: vertical;
+        font-family: inherit;
     }
-    button {
+    button { /* Style for main action buttons */
         padding: 10px 18px;
         background-color: #25D366; /* WhatsApp green */
         color: white;
@@ -46,8 +46,8 @@
         cursor: pointer;
         font-size: 16px;
         transition: background-color 0.3s ease;
-        display: block; /* Make main buttons block level */
-        margin: 10px auto; /* Center main buttons */
+        display: block;
+        margin: 10px auto;
     }
     button:hover {
         background-color: #1DA851;
@@ -57,20 +57,21 @@
         border-top: 1px solid #eee;
         padding-top: 20px;
     }
+    /* Styling for each generated message block */
     .whatsapp-message {
         border: 1px solid #e0e0e0;
         background-color: #f9f9f9;
         padding: 15px;
-        margin-bottom: 25px; /* Increased margin for better separation */
+        margin-bottom: 25px;
         border-radius: 5px;
-        position: relative; /* For positioning elements if needed */
+        position: relative;
     }
     .whatsapp-message div {
-        margin-bottom: 6px; /* Spacing between message lines */
+        margin-bottom: 6px;
         line-height: 1.5;
     }
     .whatsapp-message hr {
-       display: none; /* Hide the default HR, separation handled by message block border/margin */
+       display: none;
     }
     .whatsapp-message a {
         color: #0056b3;
@@ -81,14 +82,14 @@
     }
     .whatsapp-link-top {
         font-weight: bold;
-        margin-bottom: 15px !important; /* Extra space below top link */
-        display: block; /* Ensure it takes full width */
+        margin-bottom: 15px !important;
+        display: block;
         font-size: 1.1em;
     }
 
-    /* Common styles for copy buttons */
+    /* Common styles for small copy buttons */
     .copy-btn {
-        padding: 6px 12px; /* Smaller padding */
+        padding: 6px 12px;
         font-size: 13px;
         background-color: #6c757d; /* Grey */
         color: white;
@@ -96,8 +97,9 @@
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 0.2s ease;
-        display: inline-block; /* Allow inline display */
-        margin: 0; /* Reset margin */
+        display: inline-block;
+        margin: 0;
+        white-space: nowrap; /* Prevent button text itself from wrapping */
     }
     .copy-btn:hover {
         background-color: #5a6268;
@@ -109,29 +111,48 @@
 
     /* Container for the main "Copy Message" button */
     .copy-message-container {
-        margin-top: 15px; /* Space above copy message button */
-        text-align: left; /* Align button to the left */
+        margin-top: 15px;
+        text-align: left; /* Align button itself to the left */
     }
 
     /* Container for the form link and its copy button */
     .form-link-container {
         margin-top: 15px;
         padding: 10px;
-        background-color: #ececec; /* Slightly different background */
+        background-color: #ececec;
         border-radius: 4px;
-        display: flex; /* Use flexbox for layout */
-        justify-content: space-between; /* Push button to the end */
-        align-items: center; /* Vertically align items */
-        width: 100%; /* Ensure it takes full width */
-        box-sizing: border-box; /* Include padding in width */
+        display: flex;
+        /* Align button to the top line of text, better if link wraps */
+        align-items: flex-start;
+        width: 100%;
+        box-sizing: border-box;
     }
+    /* Span holding the descriptive text and the link */
+    .form-link-text {
+        flex-grow: 1; /* Allow this part to take up available space */
+        margin-right: 10px; /* Space between text/link and button */
+        min-width: 0; /* Crucial for allowing wrapping within flex items */
+        line-height: 1.4; /* Readability for potentially wrapped text */
+    }
+    /* Styling the actual link inside the span */
     .form-link-text a {
-        margin-left: 10px; /* Space between text and link */
+        /* --- Key styles for wrapping --- */
+        overflow-wrap: break-word; /* Standard property */
+        word-wrap: break-word;     /* Older fallback */
+        word-break: break-all;     /* Force break anywhere if needed */
+        display: inline-block;     /* Treat link like a block for layout */
+        max-width: 100%;           /* Don't exceed parent width */
+        /* --- End wrapping styles --- */
+        color: #0056b3;            /* Link color */
+        text-decoration: none;
+        vertical-align: middle;    /* Align with surrounding text nicely */
     }
+    .form-link-text a:hover {
+        text-decoration: underline;
+    }
+    /* Copy button specific styling within the form link container */
     .copy-link-btn {
-       /* Specific styles for copy link button if needed, inherits from .copy-btn */
-       margin-right: auto; /* Push link text to the left */
-       margin-left: 10px; /* Space between link and button */
+       flex-shrink: 0; /* Prevent button from shrinking */
     }
 
     #vcf-instructions {
@@ -143,6 +164,15 @@
     }
     #vcf-instructions a {
         color: #0056b3;
+    }
+
+    /* Optional: Add style for the summary message */
+    #output-summary {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+        color: #333;
     }
 
 </style>
