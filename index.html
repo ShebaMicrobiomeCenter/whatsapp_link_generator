@@ -359,9 +359,15 @@
               const lineElement = document.createElement('div');
                if (line.startsWith('http://') || line.startsWith('https://')) {
                  const linkEl = document.createElement('a');
-                 linkEl.href = line;
-                 linkEl.target = '_blank';
-                 linkEl.textContent = line;
+                 try {
+                     const url = new URL(line); // Validate the URL
+                     linkEl.href = url.href;
+                     linkEl.target = '_blank';
+                     linkEl.textContent = url.href;
+                 } catch (e) {
+                     console.warn(`Invalid URL skipped: ${line}`);
+                     return; // Skip invalid URLs
+                 }
                  lineElement.appendChild(linkEl);
                } else {
                   lineElement.textContent = line || '\u00A0'; // Add non-breaking space for empty lines
