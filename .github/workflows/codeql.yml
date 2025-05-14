@@ -11,26 +11,21 @@ on:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     permissions:
       security-events: write
-      packages: read
-      actions: read
-      contents: read
-
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript' ] # Use only supported languages.
-
+        language: [ 'javascript' ]
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3 # Update to v3
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3 # Update to v3
+      uses: github/codeql-action/analyze@v3
