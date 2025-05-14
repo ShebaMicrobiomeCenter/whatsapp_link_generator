@@ -5,151 +5,164 @@
 <title>WhatsApp Link Generator</title>
 <style>
   body {
-      font-family: 'Arial', sans-serif;
-      direction: rtl; /* Right-to-left layout */
+      font-family: 'Arial', sans-serif; /* WhatsApp uses system fonts, Arial is a safe default */
+      direction: rtl;
       margin: 0;
       padding: 20px;
-      background-color: #f4f4f4;
+      background-color: #ECE5DD; /* WhatsApp chat background like color */
       display: flex;
       justify-content: center;
+      color: #303030; /* Default dark text color */
   }
   #container {
-      background-color: #fff;
+      background-color: #FFFFFF; /* Main app container remains white */
       padding: 20px 30px;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
       max-width: 800px;
       width: 100%;
   }
   h1, h2 {
       text-align: center;
-      color: #333;
+      color: #075E54; /* WhatsApp Dark Teal for headers */
   }
   textarea {
       width: 98%;
       min-height: 100px;
       margin-bottom: 10px;
       padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      border: 1px solid #DADADA;
+      border-radius: 7px; /* Slightly more rounded like WA inputs */
       font-size: 14px;
       resize: vertical;
       font-family: inherit;
+      background-color: #F0F2F5; /* Light gray for input fields */
+      color: #111B21; /* Darker text for input */
   }
-  button { /* Style for main action buttons */
-      padding: 10px 18px;
-      background-color: #25D366; /* WhatsApp green */
+  textarea:focus {
+      border-color: #00A884; /* WhatsApp accent green on focus */
+      box-shadow: 0 0 0 2px rgba(0, 168, 132, 0.2);
+      outline: none;
+  }
+  /* Main action buttons: "צרי קישורים", "ייצאי קובץ" */
+  button.main-action-button { /* Added a class for specificity */
+      padding: 10px 20px;
+      background-color: #00A884; /* WhatsApp accent green (slightly different from chat green) */
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 20px; /* More pill-shaped like WA buttons */
       cursor: pointer;
       font-size: 16px;
+      font-weight: 500;
       transition: background-color 0.3s ease;
       display: block;
-      margin: 10px auto;
+      margin: 15px auto;
   }
-  button:hover {
-      background-color: #1DA851;
+  button.main-action-button:hover {
+      background-color: #008769; /* Darker shade of accent green */
   }
   #output {
       margin-top: 20px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid #e9edef; /* Lighter separator */
       padding-top: 20px;
   }
   /* Styling for each generated message block */
   .whatsapp-message {
-      border: 1px solid #e0e0e0;
-      background-color: #f9f9f9;
-      /* Adjust padding: Top padding increased to make space for absolute positioned button */
-      padding: 15px 15px 15px 15px; /* Top, Right, Bottom, Left */
+      background-color: #E7FFDB; /* Light green like an outgoing WA message you are composing */
+      border: 1px solid #D3F2C3; /* Slightly darker green border */
+      padding: 60px 15px 15px 15px; /* Top padding for absolute button, R, B, L */
       margin-bottom: 25px;
-      border-radius: 5px;
-      position: relative; /* Crucial for absolute positioning of children */
+      border-radius: 7.5px; /* Standard WA bubble radius */
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08); /* Subtle shadow */
+      position: relative;
+      color: #111B21; /* WhatsApp main text color */
   }
-  .whatsapp-message div:not(.copy-message-container):not(.form-link-container) { /* Target general message lines */
+  .whatsapp-message div:not(.copy-message-container):not(.form-link-container) {
       margin-bottom: 6px;
-      line-height: 1.5;
+      line-height: 1.6; /* Improved readability for message text */
   }
   .whatsapp-message hr {
      display: none;
   }
-  .whatsapp-message a {
-      color: #0056b3;
-      text-decoration: none;
+  .whatsapp-message a { /* General links within message body */
+      color: #34B7F1; /* WhatsApp link blue */
+      text-decoration: underline; /* WA links are usually underlined */
   }
    .whatsapp-message a:hover {
-      text-decoration: underline;
+      text-decoration: none;
   }
   /* Top WhatsApp link (Open chat with...) */
   .whatsapp-link-top {
-      font-weight: bold;
-      margin-bottom: 15px !important; /* Space below this link */
+      font-weight: 600; /* Semibold */
+      margin-bottom: 15px !important;
       display: block;
       font-size: 1.1em;
-      /* This link will now be part of the normal flow, pushed down by parent padding-top */
+      color: #075E54; /* Dark Teal, like contact names */
   }
 
   /* Common styles for small copy buttons */
   .copy-btn {
-      padding: 6px 12px;
+      padding: 7px 14px;
       font-size: 13px;
-      background-color: #6c757d; /* Grey */
+      background-color: #075E54; /* WhatsApp Dark Teal */
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 15px; /* Pill shape */
       cursor: pointer;
       transition: background-color 0.2s ease;
       display: inline-block;
       margin: 0;
       white-space: nowrap;
+      font-weight: 500;
   }
   .copy-btn:hover {
-      background-color: #5a6268;
+      background-color: #054C44; /* Darker Teal */
   }
   .copy-btn.copied {
-      background-color: #28a745; /* Success green */
+      background-color: #25D366; /* WhatsApp bright green for success */
       color: white;
   }
 
-  /* Container for the "Copy Message" button - NOW ABSOLUTELY POSITIONED */
+  /* Container for the "Copy Message" button - ABSOLUTELY POSITIONED */
   .copy-message-container {
       position: absolute;
-      top: 15px;  /* Distance from the top of .whatsapp-message */
-      left: 15px; /* Distance from the left of .whatsapp-message */
-      /* margin-top and text-align are no longer needed here */
+      top: 15px;
+      left: 15px;
   }
 
   /* Container for the form link and its copy button */
   .form-link-container {
-      margin-top: 15px; /* Space above this section */
-      padding: 10px;
-      background-color: #ececec;
-      border-radius: 4px;
+      margin-top: 20px; /* More space before this distinct section */
+      padding: 12px;
+      background-color: #F0F2F5; /* Light gray for UI elements, like WA Web input areas */
+      border-radius: 7.5px;
       display: flex;
-      align-items: flex-start; /* Align button to top of wrapped link */
+      align-items: flex-start;
       width: 100%;
       box-sizing: border-box;
   }
   .form-link-text {
       flex-grow: 1;
       margin-right: 10px;
-      min-width: 0; /* Allow wrapping */
-      line-height: 1.4;
+      min-width: 0;
+      line-height: 1.5;
+      color: #54656F; /* Secondary text color in WA */
   }
+  /* Link for the Google Form */
   .form-link-text a {
       overflow-wrap: break-word;
       word-wrap: break-word;
       word-break: break-all;
       display: inline-block;
       max-width: 100%;
-      color: #0056b3;
-      text-decoration: none;
+      color: #34B7F1; /* WhatsApp link blue */
+      text-decoration: underline;
       vertical-align: middle;
   }
   .form-link-text a:hover {
-      text-decoration: underline;
+      text-decoration: none;
   }
-  .copy-link-btn {
+  .copy-link-btn { /* The button itself */
      flex-shrink: 0;
   }
 
@@ -157,23 +170,29 @@
       text-align: center;
       margin-top: 20px;
       font-size: 14px;
-      color: #555;
+      color: #54656F; /* Secondary text color */
       line-height: 1.6;
   }
+  #vcf-instructions strong {
+      color: #111B21; /* Main text color for emphasis */
+  }
   #vcf-instructions a {
-      color: #0056b3;
+      color: #34B7F1; /* Link blue */
+      text-decoration: underline;
+  }
+  #vcf-instructions a:hover {
+      text-decoration: none;
   }
 
   #output-summary {
       text-align: center;
-      font-weight: bold;
+      font-weight: 600;
       margin-bottom: 15px;
       font-size: 1.1em;
-      color: #333;
+      color: #075E54; /* Dark Teal for summary */
   }
 
 </style>
-
 </head>
 <body>
  <div id="container">
@@ -182,11 +201,10 @@
    <h2> הדביקי טבלה:</h2>
    <textarea id="paste-area" placeholder="הדביקי טבלה מקובץ Excel כאן...
 העמודות הנדרשות: מספר משתתף, שם פרטי, שם משפחה, מספר טלפון"></textarea>
-   <button id="paste-button">צרי קישורים</button>
-
+    <button id="paste-button" class="main-action-button">צרי קישורים</button>
   <div id="output"></div>
 
-  <button id="export-vcf-button">ייצאי קובץ אנשי קשר (VCF)</button>
+  <button id="export-vcf-button" class="main-action-button">ייצאי קובץ אנשי קשר (VCF)</button>
   <p id="vcf-instructions">
     לאחר הורדת קובץ ה-VCF, פתחי את <a href="https://contacts.google.com/" target="_blank">Google Contacts</a>.<br>
     חפשי אפשרות בשם <strong>"יבאי"</strong> או <strong>"Import"</strong>. <br>
