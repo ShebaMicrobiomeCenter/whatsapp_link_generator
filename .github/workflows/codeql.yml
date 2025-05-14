@@ -21,16 +21,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript', 'css', 'html' ] # Replace with the languages in your repository
+        language: [ 'javascript' ] # Use only supported languages.
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3 # Update to v3
       with:
         languages: ${{ matrix.language }}
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3 # Update to v3
